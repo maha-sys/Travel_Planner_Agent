@@ -1,23 +1,48 @@
+const API_BASE_URL = "http://127.0.0.1:8000";
 
-export const generatePlan = async (formData) => {
-  // mock delay
-  await new Promise((res) => setTimeout(res, 1500));
+export async function generatePlan(formData) {
+  console.log("Sending to backend:", formData);
 
-  return {
-    itinerary: [
-      { day: 1, activity: "City sightseeing & food walk", cost: 3000 },
-      { day: 2, activity: "Museum visit & cultural tour", cost: 2500 },
-      { day: 3, activity: "Nature park & shopping", cost: 3500 },
-    ],
-    budget: {
-      total: formData.budget,
-      used: 9000,
-      remaining: formData.budget - 9000,
-    },
-    reasoning: [
-      { step: "Plan", detail: "Generated initial itinerary from preferences" },
-      { step: "Validate", detail: "Checked activities against budget" },
-      { step: "Re-plan", detail: "Optimized costs to fit budget" },
-    ],
+  const rawPrefs = formData.preferences ?? formData.activities ?? [];
+
+  let preferences = [];
+  if (Array.isArray(rawPrefs)) {
+    preferences = rawPrefs
+      .map((p) => String(p).trim().toLowerCase())
+      .filter(Boolean);
+  } else if (typeof rawPrefs === "string") {
+    preferences = rawPrefs
+      .split(",")
+      .map((p) => p.trim().toLowerCase())
+      .filter(Boolean);
+  }
+
+  const payload = {
+    budget: Number(formData.budget),
+    num_days: Number(formData.days),
+    city: formData.city,
+    preferences,
   };
-};
+
+  console.log("Payload:", payload);
+
+  const response = await fetch(`${API_BASE_URL}/plan`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    try {
+      const err = JSON.parse(text);
+      throw new Error(err.detail || "Backend error");
+    } catch {
+      throw new Error(text || "Backend error");
+    }
+  }
+
+  return await response.json();
+}

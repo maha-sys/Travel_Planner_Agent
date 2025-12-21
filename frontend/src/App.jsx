@@ -7,13 +7,24 @@ import { generatePlan } from "./api";
 
 export default function App() {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const [response, setResponse] = useState(null);
 
   const handleGenerate = async (formData) => {
     setLoading(true);
-    const data = await generatePlan(formData);
-    setResult(data);
-    setLoading(false);
+    setError(null);
+    setResponse(null);
+
+    try {
+      const data = await generatePlan(formData);
+      console.log("Backend response:", data);
+      setResponse(data);
+    } catch (err) {
+      console.error("Frontend error:", err);
+      setError(err.message || "Unable to connect to backend");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -21,9 +32,7 @@ export default function App() {
       {/* Header */}
       <header className="bg-gradient-to-r from-sky-500 to-emerald-500 text-white p-6">
         <h1 className="text-3xl font-bold">Travel Planner Agent ✈️</h1>
-        <p className="text-sm">
-          Budget-aware agentic planner
-        </p>
+        <p className="text-sm">Budget-aware agentic planner</p>
       </header>
 
       {/* Main */}
@@ -34,17 +43,31 @@ export default function App() {
         {/* Right */}
         <div className="space-y-6">
           {loading && (
-            <div className="bg-white p-6 rounded-xl shadow animate-pulse text-center">
+            <div className="bg-white p-6 rounded-xl shadow text-center animate-pulse">
               Planning your trip...
             </div>
           )}
 
-          {result && (
+          {error && (
+            <div className="bg-red-100 text-red-700 p-4 rounded-xl shadow">
+              {error}
+            </div>
+          )}
+
+          {response && response.success && response.itinerary && (
             <>
-              <ItineraryView itinerary={result.itinerary} />
-              <BudgetChart budget={result.budget} />
-              <ReplanningTimeline reasoning={result.reasoning} />
+              <ItineraryView itinerary={response.itinerary} />
+
+              <BudgetChart itinerary={response.itinerary} />
+
+              <ReplanningTimeline iterations={response.iterations || []} />
             </>
+          )}
+
+          {response && !response.success && (
+            <div className="bg-yellow-100 text-yellow-800 p-4 rounded-xl shadow">
+              {response.message}
+            </div>
           )}
         </div>
       </div>
