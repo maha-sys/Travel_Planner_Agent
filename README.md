@@ -24,7 +24,7 @@ The system is designed with a modern frontend and a scalable backend architectur
 
 **Tech Stack**
 
--> Frontend
+- Frontend
 
       React
       Vite
@@ -32,7 +32,7 @@ The system is designed with a modern frontend and a scalable backend architectur
       JavaScript
       Axios
 
--> Backend 
+- Backend 
 
       Python
       FastAPI
